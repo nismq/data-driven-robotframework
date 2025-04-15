@@ -1,0 +1,74 @@
+base_url: https://restful-booker.herokuapp.com/
+
+datadictionary:
+  avain_1: testi1
+  avain_2: testi2
+
+testitapaus_1:
+  body:
+    firstname: Teppo
+    lastname: Testaaja
+    totalprice: 350
+    depositpaid: true
+    bookingdates:
+      checkin: '2025-01-01'
+      checkout: '2025-01-04'
+    additionalneeds: Aamupala
+  odotettu_tilakoodi: "200" 
+
+testitapaus_2:
+  body:
+    firstname: Teppo
+    depositpaid: true
+    bookingdates:
+      checkin: '2025-01-01'
+      checkout: '2025-01-04'
+  odotettu_tilakoodi: "500"
+  odotettu_vastaus: "Internal Server Error"
+
+testitapaus_3:
+  body:
+    firstname: Vallu
+    lastname: Varaaja
+    totalprice: 200
+    depositpaid: true
+    bookingdates:
+      checkin: '2025-02-10'
+      checkout: '2025-02-12'
+    additionalneeds: 
+  odotettu_tilakoodi: "200" 
+
+testitapaus_4:
+  body:
+    firstname: Vallu
+    lastname: Varaaja
+    totalprice: 200
+    depositpaid: true
+    bookingdates:
+      checkin: '2025-02-10'
+      checkout: '2025-02-12'
+    additionalneeds: 
+  odotettu_tilakoodi: "403" 
+  odotettu_vastaus: Forbidden
+
+testitapaus_5:
+  vaaditut_kentät:
+    - firstname
+    - lastname
+    - totalprice
+    - depositpaid
+    - bookingdates
+    - additionalneeds
+  odotettu_tilakoodi: "200" 
+
+testitapaus_6:
+  odotettu_tilakoodi: "404" 
+  odotettu_vastaus: Not Found
+
+testitapaus_7:
+  odotettu_tilakoodi: "201" 
+  odotettu_vastaus: Created
+
+testitapaus_8:
+  odotettu_tilakoodi: "405" 
+  odotettu_vastaus: Method Not Allowed
