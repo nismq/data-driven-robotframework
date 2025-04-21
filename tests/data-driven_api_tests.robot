@@ -1,81 +1,88 @@
 *** Settings ***
 Library    RequestsLibrary 
-Variables    ../test_data/test_data.yml
+Variables    ../test_data/test_data.yaml
 
 *** Test Cases ***
 Varauksen luonti
     [Template]    Varauksen luonti
-    ${testitapaus_1}
-    ${testitapaus_2}
-
-# Varauksen luonti
-#     ${vastaus}    POST  ${base_url}/booking  json=${testitapaus_1}[body]  expected_status=${testitapaus_1}[odotettu_tilakoodi]
-#     ${vastaus_body}    Set Variable    ${vastaus.json()}
-#     Should Contain    ${vastaus_body}    bookingid
-#     Tarkista vastauksen body    ${vastaus_body}[booking]    ${testitapaus_1}[body]
-
-Varauksen luonti puuttuvilla kentillä
-    ${vastaus}    POST  ${base_url}/booking  json=${testitapaus_2}[body]  expected_status=${testitapaus_2}[odotettu_tilakoodi]
-    Should Be Equal    ${vastaus.text}    ${testitapaus_2}[odotettu_vastaus]
+    ${varauksen_luonti_onnistuneesti}    ok
+    ${varauksen_luonti_puuttuvilla_kentillä}    error
 
 Varauksen päivitys
-    ${id}    Luo varaus ja palauta id
-    ${token}    Luo ja palauta autentikointi token
-    ${header}    Create Dictionary    Cookie=token\=${token}
-    ${vastaus}    PUT  ${base_url}/booking/${id}  json=${testitapaus_3}[body]
-    ...    expected_status=${testitapaus_3}[odotettu_tilakoodi]  headers=${header}
-    Tarkista vastauksen body    ${vastaus.json()}    ${testitapaus_3}[body]
-
-Varauksen päivitys ilman tunnistautumista
-    ${id}    Luo varaus ja palauta id
-    ${vastaus}    PUT  ${base_url}/booking/${id}  json=${testitapaus_4}[body]
-    ...    expected_status=${testitapaus_4}[odotettu_tilakoodi]
-    Should Be Equal    ${vastaus.text}    ${testitapaus_4}[odotettu_vastaus]
+    [Template]    Varauksen päivitys
+    ${varauksen_päivitys_onnistuneesti}    ok
+    ${varauksen_päivitys_ilman_tunnistautumista}    forbidden
 
 Varauksen haku
-    ${id}    Luo varaus ja palauta id
-    ${vastaus}    GET  ${base_url}/booking/${id}  expected_status=${testitapaus_5}[odotettu_tilakoodi]
-    FOR    ${kenttä}    IN   @{testitapaus_5}[vaaditut_kentät]
-        Should Contain    ${vastaus.json()}    ${kenttä}
-    END
-    
-Varauksen haku tuntemattomalla id:llä
-    ${id}    Set Variable    500000
-    ${vastaus}    GET  ${base_url}/booking/${id}  expected_status=${testitapaus_6}[odotettu_tilakoodi]
-    Should Be Equal    ${vastaus.text}    ${testitapaus_6}[odotettu_vastaus]
+    [Template]    Varauksen haku
+    ${varauksen_haku_onnistuneesti}    ok
+    ${varauksen_haku_tuntemattomalla_tunnisteella}    notfound
 
 Varauksen poisto
-    ${id}    Luo varaus ja palauta id
-    ${token}    Luo ja palauta autentikointi token
-    ${header}    Create Dictionary    Cookie=token\=${token}
-    ${vastaus}    DELETE  ${base_url}/booking/${id}  
-    ...    expected_status=${testitapaus_7}[odotettu_tilakoodi]  headers=${header}
-    Should Be Equal    ${vastaus.text}    ${testitapaus_7}[odotettu_vastaus]
-    ${vastaus}    GET  ${base_url}/booking/${id}  expected_status=404
-    Should Be Equal    ${vastaus.text}    Not Found
+    [Template]    Varauksen poisto
+    ${varauksen_poisto_onnistuneesti}
+    ${varauksen_poisto_tuntemattomalla_tunnisteella}
 
-Varauksen poisto tuntemattomalla id:llä
-    ${id}    Set Variable    500000
-    ${token}    Luo ja palauta autentikointi token
-    ${header}    Create Dictionary    Cookie=token\=${token}
-    ${vastaus}    DELETE  ${base_url}/booking/${id}  
-    ...    expected_status=${testitapaus_8}[odotettu_tilakoodi]  headers=${header}
-    Should Be Equal    ${vastaus.text}    Method Not Allowed
 
 *** Keywords ***
 Varauksen luonti
-    [Arguments]    ${testi_data}
-    ${vastaus}    POST  ${base_url}/booking  json=${testi_data}[body]  expected_status=${testi_data}[odotettu_tilakoodi]
-    Tarkista vastaus    ${vastaus}    ${testi_data}
-
-Tarkista vastaus
-    [Arguments]    ${vastaus}    ${testi_data}
-    TRY
+    [Arguments]    ${testi_data}    ${tapaus}
+    ${vastaus}    POST  ${base_url}/booking  json=${testi_data}[body]  
+    ...    expected_status=${testi_data}[odotettu_vastaus][tilakoodi]
+    IF    "${tapaus}" == "ok"
         Should Contain    ${vastaus.json()}    bookingid
-    EXCEPT
-        Should Be Equal    ${vastaus.text}    ${testi_data}[odotettu_vastaus]
+    ELSE
+        Should Be Equal    ${vastaus.text}    ${testi_data}[odotettu_vastaus][body]
     END
 
+Varauksen päivitys
+    [Arguments]    ${testi_data}    ${tapaus}
+    ${id}    Luo varaus ja palauta id
+    ${header}    Create Dictionary    Cookie=
+    IF    ${testi_data}[käytä_todennusta]
+        ${token}    Luo ja palauta autentikointi token
+        ${header}[Cookie]    Set Variable   token\=${token}
+    END
+    ${vastaus}    PUT  ${base_url}/booking/${id}  json=${testi_data}[body]
+    ...    expected_status=${testi_data}[odotettu_vastaus][tilakoodi]  headers=${header}
+    IF    "${tapaus}" == "ok"
+        Tarkista json    ${vastaus.json()}    ${testi_data}[odotettu_vastaus][body]
+    ELSE
+        Should Be Equal    ${vastaus.reason}    ${testi_data}[odotettu_vastaus][body]
+    END
+
+Varauksen haku
+    [Arguments]    ${testi_data}    ${tapaus}
+    IF    ${testi_data}[luo_varaus]
+        ${id}    Luo varaus ja palauta id
+    ELSE
+        ${id}    Set Variable    500000 
+    END
+    ${vastaus}    GET  ${base_url}/booking/${id}  
+    ...    expected_status=${testi_data}[odotettu_vastaus][tilakoodi]
+    IF    "${tapaus}" == "ok"
+        FOR    ${kenttä}    IN   @{testi_data}[odotettu_vastaus][vaaditut_kentät]
+            Should Contain    ${vastaus.json()}    ${kenttä}
+        END
+    ELSE
+        Should Be Equal    ${vastaus.reason}    ${testi_data}[odotettu_vastaus][body]
+    END
+
+Varauksen poisto
+    [Arguments]    ${testi_data}
+    IF    ${testi_data}[luo_varaus]
+        ${id}    Luo varaus ja palauta id
+    ELSE
+        ${id}    Set Variable    500000 
+    END
+    ${token}    Luo ja palauta autentikointi token
+    ${header}    Create Dictionary    Cookie=token\=${token}
+    ${vastaus}    DELETE  ${base_url}/booking/${id}  
+    ...    expected_status=${testi_data}[DELETE][odotettu_vastaus][tilakoodi]  headers=${header}
+    Should Be Equal    ${vastaus.text}    ${testi_data}[DELETE][odotettu_vastaus][body]
+    ${vastaus}    GET  ${base_url}/booking/${id}  
+    ...    expected_status=${testi_data}[GET][odotettu_vastaus][tilakoodi]
+    Should Be Equal    ${vastaus.text}    ${testi_data}[GET][odotettu_vastaus][body]
 
 Luo varaus ja palauta id
     ${varaus_päivät}    Create Dictionary  checkin=2025-01-01  checkout=2025-01-04
@@ -90,9 +97,10 @@ Luo ja palauta autentikointi token
     ${vastaus}    POST  https://restful-booker.herokuapp.com/auth  json=${body}
     RETURN    ${vastaus.json()}[token]
 
-Tarkista vastauksen body
-    [Arguments]    ${vastaus_body}  ${odotettu_body}
-    Should Be Equal    ${vastaus_body}[firstname]    ${odotettu_body}[firstname]
-    Should Be Equal    ${vastaus_body}[lastname]    ${odotettu_body}[lastname]
-    Should Be Equal As Integers    ${vastaus_body}[totalprice]    ${odotettu_body}[totalprice]
-    Should Be Equal    ${vastaus_body}[bookingdates]    ${odotettu_body}[bookingdates]
+Tarkista json
+    [Arguments]    ${vastaus_json}  ${odotettu_json}
+    Should Be Equal    ${vastaus_json}[firstname]    ${odotettu_json}[firstname]
+    Should Be Equal    ${vastaus_json}[lastname]    ${odotettu_json}[lastname]
+    Should Be Equal    ${vastaus_json}[depositpaid]    ${odotettu_json}[depositpaid]
+    Should Be Equal As Integers    ${vastaus_json}[totalprice]    ${odotettu_json}[totalprice]
+    Should Be Equal    ${vastaus_json}[bookingdates]    ${odotettu_json}[bookingdates]

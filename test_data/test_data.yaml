@@ -1,0 +1,114 @@
+base_url: https://restful-booker.herokuapp.com/
+
+varauksen_luonti_onnistuneesti:
+  body:
+    firstname: Teppo
+    lastname: Testaaja
+    totalprice: 350
+    depositpaid: true
+    bookingdates:
+      checkin: '2025-01-01'
+      checkout: '2025-01-04'
+    additionalneeds: Aamupala
+  odotettu_vastaus:
+    tilakoodi: "200" 
+    body:
+      bookingid:
+      booking:
+        firstname: Teppo
+        lastname: Testaaja
+        totalprice: 350
+        depositpaid: true
+        bookingdates:
+          checkin: '2025-01-01'
+          checkout: '2025-01-04'
+        additionalneeds: Aamupala
+
+varauksen_luonti_puuttuvilla_kentillä:
+  body:
+    firstname: Teppo
+    depositpaid: true
+    bookingdates:
+      checkin: '2025-01-01'
+      checkout: '2025-01-04'
+  odotettu_vastaus:
+    tilakoodi: "500"
+    body: "Internal Server Error"
+
+varauksen_päivitys_onnistuneesti:
+  käytä_todennusta: True
+  body:
+    firstname: Vallu
+    lastname: Varaaja
+    totalprice: 200
+    depositpaid: true
+    bookingdates:
+      checkin: '2025-02-10'
+      checkout: '2025-02-12'
+    additionalneeds: 
+  odotettu_vastaus:
+    tilakoodi: "200" 
+    body:
+      firstname: Vallu
+      lastname: Varaaja
+      totalprice: 200
+      depositpaid: true
+      bookingdates:
+        checkin: '2025-02-10'
+        checkout: '2025-02-12'
+      additionalneeds: 
+
+varauksen_päivitys_ilman_tunnistautumista:
+  käytä_todennusta: False
+  body:
+    firstname: Vallu
+    lastname: Varaaja
+    totalprice: 200
+    depositpaid: true
+    bookingdates:
+      checkin: '2025-02-10'
+      checkout: '2025-02-12'
+    additionalneeds: 
+  odotettu_vastaus:
+    tilakoodi: "403" 
+    body: Forbidden
+
+varauksen_haku_onnistuneesti:
+  luo_varaus: True
+  odotettu_vastaus:
+    tilakoodi: "200" 
+    vaaditut_kentät:
+      - firstname
+      - lastname
+      - totalprice
+      - depositpaid
+      - bookingdates
+      - additionalneeds
+
+varauksen_haku_tuntemattomalla_tunnisteella:
+  luo_varaus: False
+  odotettu_vastaus:
+    tilakoodi: "404" 
+    body: Not Found
+
+varauksen_poisto_onnistuneesti:
+  luo_varaus: True
+  DELETE:
+    odotettu_vastaus:
+      tilakoodi: "201" 
+      body: Created
+  GET:
+    odotettu_vastaus:
+      tilakoodi: "404" 
+      body: Not Found
+
+varauksen_poisto_tuntemattomalla_tunnisteella:
+  luo_varaus: False
+  DELETE:
+    odotettu_vastaus:
+      tilakoodi: "405" 
+      body: Method Not Allowed
+  GET:
+    odotettu_vastaus:
+      tilakoodi: "404" 
+      body: Not Found
