@@ -26,51 +26,51 @@ Varauksen poisto
 
 *** Keywords ***
 Varauksen luonti
-    [Arguments]    ${testi_data}    ${tapaus}
-    ${vastaus}    POST  ${base_url}/booking  json=${testi_data}[body]  
-    ...    expected_status=${testi_data}[odotettu_vastaus][tilakoodi]
+    [Arguments]    ${testidata}    ${tapaus}
+    ${vastaus}    POST  ${base_url}/booking  json=${testidata}[body]  
+    ...    expected_status=${testidata}[odotettu_vastaus][tilakoodi]
     IF    "${tapaus}" == "ok"
         Should Contain    ${vastaus.json()}    bookingid
     ELSE
-        Should Be Equal    ${vastaus.text}    ${testi_data}[odotettu_vastaus][body]
+        Should Be Equal    ${vastaus.text}    ${testidata}[odotettu_vastaus][body]
     END
 
 Varauksen päivitys
-    [Arguments]    ${testi_data}    ${tapaus}
+    [Arguments]    ${testidata}    ${tapaus}
     ${id}    Luo varaus ja palauta id
     ${header}    Create Dictionary    Cookie=
-    IF    ${testi_data}[käytä_todennusta]
+    IF    ${testidata}[käytä_todennusta]
         ${token}    Luo ja palauta autentikointi token
         ${header}[Cookie]    Set Variable   token\=${token}
     END
-    ${vastaus}    PUT  ${base_url}/booking/${id}  json=${testi_data}[body]
-    ...    expected_status=${testi_data}[odotettu_vastaus][tilakoodi]  headers=${header}
+    ${vastaus}    PUT  ${base_url}/booking/${id}  json=${testidata}[body]
+    ...    expected_status=${testidata}[odotettu_vastaus][tilakoodi]  headers=${header}
     IF    "${tapaus}" == "ok"
-        Tarkista json    ${vastaus.json()}    ${testi_data}[odotettu_vastaus][body]
+        Tarkista json    ${vastaus.json()}    ${testidata}[odotettu_vastaus][body]
     ELSE
-        Should Be Equal    ${vastaus.reason}    ${testi_data}[odotettu_vastaus][body]
+        Should Be Equal    ${vastaus.reason}    ${testidata}[odotettu_vastaus][body]
     END
 
 Varauksen haku
-    [Arguments]    ${testi_data}    ${tapaus}
-    IF    ${testi_data}[luo_varaus]
+    [Arguments]    ${testidata}    ${tapaus}
+    IF    ${testidata}[luo_varaus]
         ${id}    Luo varaus ja palauta id
     ELSE
         ${id}    Set Variable    500000 
     END
     ${vastaus}    GET  ${base_url}/booking/${id}  
-    ...    expected_status=${testi_data}[odotettu_vastaus][tilakoodi]
+    ...    expected_status=${testidata}[odotettu_vastaus][tilakoodi]
     IF    "${tapaus}" == "ok"
-        FOR    ${kenttä}    IN   @{testi_data}[odotettu_vastaus][vaaditut_kentät]
+        FOR    ${kenttä}    IN   @{testidata}[odotettu_vastaus][vaaditut_kentät]
             Should Contain    ${vastaus.json()}    ${kenttä}
         END
     ELSE
-        Should Be Equal    ${vastaus.reason}    ${testi_data}[odotettu_vastaus][body]
+        Should Be Equal    ${vastaus.reason}    ${testidata}[odotettu_vastaus][body]
     END
 
 Varauksen poisto
-    [Arguments]    ${testi_data}
-    IF    ${testi_data}[luo_varaus]
+    [Arguments]    ${testidata}
+    IF    ${testidata}[luo_varaus]
         ${id}    Luo varaus ja palauta id
     ELSE
         ${id}    Set Variable    500000 
@@ -78,11 +78,11 @@ Varauksen poisto
     ${token}    Luo ja palauta autentikointi token
     ${header}    Create Dictionary    Cookie=token\=${token}
     ${vastaus}    DELETE  ${base_url}/booking/${id}  
-    ...    expected_status=${testi_data}[DELETE][odotettu_vastaus][tilakoodi]  headers=${header}
-    Should Be Equal    ${vastaus.text}    ${testi_data}[DELETE][odotettu_vastaus][body]
+    ...    expected_status=${testidata}[DELETE][odotettu_vastaus][tilakoodi]  headers=${header}
+    Should Be Equal    ${vastaus.text}    ${testidata}[DELETE][odotettu_vastaus][body]
     ${vastaus}    GET  ${base_url}/booking/${id}  
-    ...    expected_status=${testi_data}[GET][odotettu_vastaus][tilakoodi]
-    Should Be Equal    ${vastaus.text}    ${testi_data}[GET][odotettu_vastaus][body]
+    ...    expected_status=${testidata}[GET][odotettu_vastaus][tilakoodi]
+    Should Be Equal    ${vastaus.text}    ${testidata}[GET][odotettu_vastaus][body]
 
 Luo varaus ja palauta id
     ${varaus_päivät}    Create Dictionary  checkin=2025-01-01  checkout=2025-01-04
