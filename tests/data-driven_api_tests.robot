@@ -37,7 +37,7 @@ Varauksen luonti
 
 Varauksen päivitys
     [Arguments]    ${testidata}    ${tapaus}
-    ${id}    Luo varaus ja palauta id
+    ${id}    Luo varaus tai palauta random id    True
     ${header}    Create Dictionary    Cookie=
     IF    ${testidata}[käytä_todennusta]
         ${token}    Luo ja palauta autentikointi token
@@ -53,28 +53,19 @@ Varauksen päivitys
 
 Varauksen haku
     [Arguments]    ${testidata}    ${tapaus}
-    IF    ${testidata}[luo_varaus]
-        ${id}    Luo varaus ja palauta id
-    ELSE
-        ${id}    Set Variable    500000 
-    END
+    ${id}    Luo varaus tai palauta random id    ${testidata}[luo_varaus]
     ${vastaus}    GET  ${base_url}/booking/${id}  
     ...    expected_status=${testidata}[odotettu_vastaus][tilakoodi]
     IF    "${tapaus}" == "ok"
-        FOR    ${kenttä}    IN   @{testidata}[odotettu_vastaus][vaaditut_kentät]
-            Should Contain    ${vastaus.json()}    ${kenttä}
-        END
+        Tarkista vastauksen vaaditut kentät    ${vastaus.json()}    
+        ...    @{testidata}[odotettu_vastaus][vaaditut_kentät]
     ELSE
         Should Be Equal    ${vastaus.reason}    ${testidata}[odotettu_vastaus][body]
     END
 
 Varauksen poisto
     [Arguments]    ${testidata}
-    IF    ${testidata}[luo_varaus]
-        ${id}    Luo varaus ja palauta id
-    ELSE
-        ${id}    Set Variable    500000 
-    END
+    ${id}    Luo varaus tai palauta random id    ${testidata}[luo_varaus]
     ${token}    Luo ja palauta autentikointi token
     ${header}    Create Dictionary    Cookie=token\=${token}
     ${vastaus}    DELETE  ${base_url}/booking/${id}  
@@ -84,13 +75,18 @@ Varauksen poisto
     ...    expected_status=${testidata}[GET][odotettu_vastaus][tilakoodi]
     Should Be Equal    ${vastaus.text}    ${testidata}[GET][odotettu_vastaus][body]
 
-Luo varaus ja palauta id
-    ${varaus_päivät}    Create Dictionary  checkin=2025-01-01  checkout=2025-01-04
-    ${body}    Create Dictionary  firstname=Teppo  lastname=Testaaja  totalprice=${350}  
-    ...    depositpaid=${True}  bookingdates=${varaus_päivät}  additionalneeds=Aamupala
-    ${vastaus}    POST  https://restful-booker.herokuapp.com/booking  json=${body}  expected_status=200
-    ${vastaus_body}    Set Variable    ${vastaus.json()}
-    RETURN    ${vastaus_body}[bookingid]
+Luo varaus tai palauta random id
+    [Arguments]    ${luo_varaus}
+    IF    ${luo_varaus}
+        ${varaus_päivät}    Create Dictionary  checkin=2025-01-01  checkout=2025-01-04
+        ${body}    Create Dictionary  firstname=Teppo  lastname=Testaaja  totalprice=${350}  
+        ...    depositpaid=${True}  bookingdates=${varaus_päivät}  additionalneeds=Aamupala
+        ${vastaus}    POST  https://restful-booker.herokuapp.com/booking  json=${body}  expected_status=200
+        ${vastaus_body}    Set Variable    ${vastaus.json()}
+        RETURN    ${vastaus_body}[bookingid]
+    ELSE
+        RETURN    Evaluate     random.randint(50000, 100000)
+    END
 
 Luo ja palauta autentikointi token
     ${body}    Create Dictionary  username=admin  password=password123
@@ -104,3 +100,9 @@ Tarkista json
     Should Be Equal    ${vastaus_json}[depositpaid]    ${odotettu_json}[depositpaid]
     Should Be Equal As Integers    ${vastaus_json}[totalprice]    ${odotettu_json}[totalprice]
     Should Be Equal    ${vastaus_json}[bookingdates]    ${odotettu_json}[bookingdates]
+
+Tarkista vastauksen vaaditut kentät
+    [Arguments]    ${vastaus_json}    @{vaaditut_kentät}
+    FOR    ${kenttä}    IN   @{vaaditut_kentät}
+        Should Contain    ${vastaus_json}    ${kenttä}
+    END
